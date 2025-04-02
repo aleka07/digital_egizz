@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # Go Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: digital-egiz-backend
+    restart: always
+    environment:
+      - PORT=8080
+      - DITTO_HOST=gateway
+      - DITTO_PORT=8080
+      - DITTO_USERNAME=ditto
+      - DITTO_PASSWORD=ditto
+    ports:
+      - "9090:8080"
+    depends_on:
+      - gateway
+    networks:
+      - ditto-network
+
+  # MongoDB for Eclipse Ditto
+  mongodb:
+    image: docker.io/mongo:5.0
+    container_name: mongodb
+    networks:
+      - ditto-network
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=ditto
+      - MONGO_INITDB_ROOT_PASSWORD=ditto
+    volumes:
+      - mongodb-data:/data/db
+    command: mongod --storageEngine wiredTiger
+    
+  # Eclipse Ditto Policies Service
+  policies:
+    image: docker.io/eclipse/ditto-policies:latest
+    container_name: policies
+    networks:
+      - ditto-network
+    depends_on:
+      - mongodb
+    environment:
+      - SPRING_PROFILES_ACTIVE=mongodb
+      - CLUSTER_DISCOVERY_METHOD=docker-dns
+      - MONGO_DB_URI=mongodb://ditto:ditto@mongodb:27017/ditto?retryWrites=true&w=majority
+      - LOGGING_LEVEL_ROOT=INFO
+    restart: always
+    
+  # Eclipse Ditto Things Service
+  things:
+    image: docker.io/eclipse/ditto-things:latest
+    container_name: things
+    networks:
+      - ditto-network
+    depends_on:
+      - mongodb
+      - policies
+    environment:
+      - SPRING_PROFILES_ACTIVE=mongodb
+      - CLUSTER_DISCOVERY_METHOD=docker-dns
+      - MONGO_DB_URI=mongodb://ditto:ditto@mongodb:27017/ditto?retryWrites=true&w=majority
+      - LOGGING_LEVEL_ROOT=INFO
+    restart: always
+    
+  # Eclipse Ditto Connectivity Service
+  connectivity:
+    image: docker.io/eclipse/ditto-connectivity:latest
+    container_name: connectivity
+    networks:
+      - ditto-network
+    depends_on:
+      - mongodb
+      - policies
+      - things
+    environment:
+      - SPRING_PROFILES_ACTIVE=mongodb
+      - CLUSTER_DISCOVERY_METHOD=docker-dns
+      - MONGO_DB_URI=mongodb://ditto:ditto@mongodb:27017/ditto?retryWrites=true&w=majority
+      - LOGGING_LEVEL_ROOT=INFO
+    restart: always
+    
+  # Eclipse Ditto Gateway Service
+  gateway:
+    image: docker.io/eclipse/ditto-gateway:latest
+    container_name: gateway
+    networks:
+      - ditto-network
+    depends_on:
+      - mongodb
+      - policies
+      - things
+      - connectivity
+    environment:
+      - SPRING_PROFILES_ACTIVE=mongodb
+      - CLUSTER_DISCOVERY_METHOD=docker-dns
+      - MONGO_DB_URI=mongodb://ditto:ditto@mongodb:27017/ditto?retryWrites=true&w=majority
+      - LOGGING_LEVEL_ROOT=INFO
+      - DEVOPS_SECURE_STATUS=false
+      - ENABLE_PRE_AUTHENTICATION=true
+      # Default username/password: ditto/ditto
+      - DEVOPS_PASSWORD=$2a$10$3Qnb4KmGnHyGVJMX/XpaeOZm9aKM9f6QEutd31P68s88Cf6cEM0GG
+    restart: always
+    ports:
+      - "8080:8080"
+  
+  # Swagger UI for API Documentation
+  swagger-ui:
+    image: docker.io/swaggerapi/swagger-ui:latest
+    container_name: swagger-ui
+    networks:
+      - ditto-network
+    restart: always
+    environment:
+      - URL=http://localhost:8080/api/2/api-docs
+      - CONFIG_URL=/apispecs/swagger-config.json
+    volumes:
+      - ./docker/ditto/swagger-ui/swagger-config.json:/usr/share/nginx/html/apispecs/swagger-config.json
+    ports:
+      - "8081:8080"
+
+volumes:
+  mongodb-data:
+    name: mongodb-data
+
+networks:
+  ditto-network:
+    name: ditto-network 

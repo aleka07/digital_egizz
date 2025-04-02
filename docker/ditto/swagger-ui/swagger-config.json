@@ -1,0 +1,21 @@
+{
+  "urls": [
+    {
+      "name": "Ditto API v2",
+      "url": "http://localhost:8080/api/2/api-docs"
+    }
+  ],
+  "deepLinking": true,
+  "displayOperationId": true,
+  "defaultModelsExpandDepth": 1,
+  "defaultModelExpandDepth": 1,
+  "defaultModelRendering": "model",
+  "displayRequestDuration": true,
+  "docExpansion": "none",
+  "filter": true,
+  "operationsSorter": "alpha",
+  "showExtensions": true,
+  "tagsSorter": "alpha",
+  "validatorUrl": null,
+  "persistAuthorization": true
+} 
