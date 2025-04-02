@@ -165,3 +165,8 @@ Actual Log:
 [2025-04-02 12:13:30] Found issue with Docker build: go.sum not found. Updated Dockerfile to handle missing go.sum file.
 [2025-04-02 12:15:45] Found Go version compatibility issue. Updated go.mod to specify Go 1.21 instead of 1.24.1.
 [2025-04-02 12:18:30] Successfully built and started all Docker containers. Verified backend health endpoint is responding correctly.
+[2025-04-02 12:20:00] Running additional verification tests to ensure all components are working properly.
+[2025-04-02 12:22:15] Found issue with Eclipse Ditto clustering. Updated Docker Compose configuration to fix cluster discovery.
+[2025-04-02 12:25:30] Backend service is working properly with health endpoint responding correctly. Eclipse Ditto is starting but needs additional time to fully initialize. Swagger UI is accessible.
+[2025-04-02 12:30:00] Additional Eclipse Ditto clustering issues identified: nodes cannot find enough contact points to form a cluster. Updating configuration to properly address Ditto clustering requirements.
+[2025-04-02 12:35:30] Researched official Eclipse Ditto configuration and updated Docker Compose file to properly disable clustering using Pekko's local actor provider setting.
