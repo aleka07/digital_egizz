@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # MongoDB for Ditto
+  mongodb:
+    image: docker.io/mongo:5.0
+    container_name: mongodb
+    networks:
+      - ditto
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
+    volumes:
+      - mongodb-data:/data/db
+    command: mongod --storageEngine wiredTiger
+
+  # Ditto services
+  ditto-gateway:
+    image: docker.io/eclipse/ditto-gateway:latest
+    container_name: ditto-gateway
+    networks:
+      - ditto
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=UTC
+      - BIND_HOSTNAME=0.0.0.0
+      - ENABLE_PRE_AUTHENTICATION=true
+      - DEVOPS_PASSWORD=ditto
+    depends_on:
+      - mongodb
+
+  # Digital Egiz backend service
+  backend:
+    build: ./backend # Path to the directory containing the Dockerfile
+    container_name: digital-egiz-backend # Optional: specific container name
+    ports:
+      - "8081:8081" # Map host port 8081 to container port 8081
+    networks:
+      - ditto # Connect to the same network as Ditto services
+    depends_on:
+      - ditto-gateway
+    environment:
+      # Define environment variables needed by the backend later
+      DITTO_API_URL: "http://ditto-gateway:8080/api/2"
+      DITTO_USER: "ditto"
+      DITTO_PASS: "ditto" # Default Ditto credentials
+    restart: unless-stopped # Restart policy
+
+networks:
+  ditto:
+    driver: bridge
+
+volumes:
+  mongodb-data: 
