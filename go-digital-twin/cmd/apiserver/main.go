@@ -61,16 +61,41 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	// --- Register Routes (No change needed here if API handlers use the interface correctly)---
-	r.Get("/healthz", api.HealthCheckHandler) // TODO: Enhance health check to ping DB?
+	// --- Register Routes ---
+	r.Get("/healthz", api.HealthCheckHandler)
 
+	// Model Routes
 	r.Route("/api/v1/models", func(r chi.Router) {
-		// These handlers now operate on the PostgresModelStore via the interface
 		r.Get("/", apiHandler.ListModels)
 		r.Post("/", apiHandler.CreateModel)
 		r.Get("/{modelId}", apiHandler.GetModel)
 		r.Put("/{modelId}", apiHandler.UpdateModel)
 		r.Delete("/{modelId}", apiHandler.DeleteModel)
+	})
+
+	// Twin Instance Routes - NEW
+	r.Route("/api/v1/twins", func(r chi.Router) {
+		r.Get("/", apiHandler.ListTwins)   // GET /api/v1/twins (?modelId=...)
+		r.Post("/", apiHandler.CreateTwin) // POST /api/v1/twins
+
+		// Routes specific to a twin instance
+		r.Route("/{twinId}", func(r chi.Router) {
+			r.Get("/", apiHandler.GetTwin)       // GET /api/v1/twins/{twinId}
+			r.Put("/", apiHandler.UpdateTwin)    // PUT /api/v1/twins/{twinId} (General update)
+			r.Delete("/", apiHandler.DeleteTwin) // DELETE /api/v1/twins/{twinId}
+
+			// Specific property/tag updates
+			r.Put("/properties/desired", apiHandler.UpdateTwinDesiredProperties) // PUT /api/v1/twins/{twinId}/properties/desired
+			r.Put("/tags", apiHandler.UpdateTwinTags)                            // PUT /api/v1/twins/{twinId}/tags
+			// TODO: Add GET routes for specific properties/tags if needed
+
+			// Telemetry Routes - NEW
+			r.Route("/telemetry", func(r chi.Router) {
+				r.Get("/latest", apiHandler.GetLatestTelemetry)                   // GET /twins/{twinId}/telemetry/latest
+				r.Get("/{telemetryName}/history", apiHandler.GetTelemetryHistory) // GET /twins/{twinId}/telemetry/{telemetryName}/history
+				// Maybe POST route here later for ingesting single points via API?
+			})
+		})
 	})
 
 	// --- Configure and Start Server ---

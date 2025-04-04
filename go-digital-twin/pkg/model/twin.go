@@ -26,10 +26,9 @@ type TwinInstance struct {
 	ID      string `json:"id" yaml:"id"`           // Unique instance ID (e.g., UUID)
 	ModelID string `json:"modelId" yaml:"modelId"` // ID of the TwinModel this instance implements
 
-	// --- Placeholders for later ---
-	// ReportedProperties map[string]interface{} `json:"reportedProperties,omitempty"` // Last known state reported by the device
-	// DesiredProperties  map[string]interface{} `json:"desiredProperties,omitempty"`  // Target state set by applications
-	// Tags             map[string]string      `json:"tags,omitempty"`               // Metadata tags for querying/grouping
+	ReportedProperties map[string]interface{} `json:"reportedProperties,omitempty"` // Last known state reported by the device
+	DesiredProperties  map[string]interface{} `json:"desiredProperties,omitempty"`  // Target state set by applications
+	Tags               map[string]string      `json:"tags,omitempty"`               // Metadata tags for querying/grouping
 
 	CreatedAt time.Time `json:"createdAt"` // Timestamp of instance creation
 	UpdatedAt time.Time `json:"updatedAt"` // Timestamp of last instance update (state change, etc.)
